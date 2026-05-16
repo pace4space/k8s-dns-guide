@@ -821,11 +821,38 @@ function buildScene(THREE, scenario, canvas) {
     scene.add(sp);
   });
 
+  // ─── Node shape lookup — each node type gets a distinct 3D geometry ───────
+  const nodeGeo = (id, r, THREE) => {
+    // Pods → hexagonal prism (flat-topped cylinder, 6 sides)
+    if (['app','payments-pod','frontend','checkout','payment','mongo0','dead','api-gw'].includes(id))
+      return new THREE.CylinderGeometry(r, r, r * 0.55, 6);
+    // DNS / config → octahedron (diamond)
+    if (['coredns','resolv','node-dns'].includes(id))
+      return new THREE.OctahedronGeometry(r, 0);
+    // Errors → tetrahedron (warning triangle / spike)
+    if (['nxdomain','empty'].includes(id))
+      return new THREE.TetrahedronGeometry(r * 1.1, 0);
+    // Network routing → icosahedron (complex mesh)
+    if (['cni','kube-proxy','clusterip','endpointslice'].includes(id))
+      return new THREE.IcosahedronGeometry(r, 0);
+    // External services → box (solid, foreign)
+    if (['stripe','cloud-dns','mongo'].includes(id))
+      return new THREE.BoxGeometry(r * 1.5, r * 1.5, r * 1.5);
+    // Proxies / mesh → torus (relay ring)
+    if (['proxy-src','proxy-dst'].includes(id))
+      return new THREE.TorusGeometry(r, r * 0.35, 8, 18);
+    // mTLS / certs → dodecahedron (complex, many faces)
+    if (['mtls','fqdn-fix'].includes(id))
+      return new THREE.DodecahedronGeometry(r, 0);
+    // Default fallback
+    return new THREE.SphereGeometry(r, 32, 32);
+  };
+
   const nodeMeshes = {};
   scenario.nodes.forEach(node => {
     const col = new THREE.Color(node.color);
     const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(node.r, 32, 32),
+      nodeGeo(node.id, node.r, THREE),
       new THREE.MeshPhongMaterial({ color: col, emissive: col, emissiveIntensity: 0.3, transparent: true, opacity: 0.9 })
     );
     mesh.position.set(...node.pos);

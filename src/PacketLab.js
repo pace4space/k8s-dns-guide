@@ -5,20 +5,79 @@ import PacketStories from './PacketStories';
 import PacketUniverse from './PacketUniverse';
 
 const SCENARIO_KEYS = ['pablo', 'nadia', 'carlos', 'reina', 'maya'];
-const SCENARIO_LABELS = {
-  pablo: '📦 Pablo',
-  nadia: '🌀 Nadia',
-  carlos: '🌍 Carlos',
-  reina: '⏳ Reina',
-  maya: '🔒 Maya',
-};
-const SCENARIO_COLORS = {
-  pablo: '#2dd4bf',
-  nadia: '#f59e0b',
-  carlos: '#fb923c',
-  reina: '#f87171',
-  maya: '#9b7ff4',
-};
+const SCENARIO_LABELS = { pablo:'📦 Pablo', nadia:'🌀 Nadia', carlos:'🌍 Carlos', reina:'⏳ Reina', maya:'🔒 Maya' };
+const SCENARIO_COLORS = { pablo:'#2dd4bf', nadia:'#f59e0b', carlos:'#fb923c', reina:'#f87171', maya:'#9b7ff4' };
+
+// Info panel rendered as an absolute overlay INSIDE the canvas container
+// so it works both in normal view and in fullscreen mode
+function NodeInfoOverlay({ info, onClose }) {
+  if (!info) return null;
+  return (
+    <motion.div
+      key={info.nodeId}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.18 }}
+      style={{
+        position: 'absolute',
+        top: 12, right: 52,       // right of fullscreen button
+        width: 300,
+        maxHeight: 'calc(100% - 24px)',
+        overflowY: 'auto',
+        background: 'rgba(12,12,20,0.97)',
+        border: `1px solid ${info.info.color}55`,
+        borderRadius: 12,
+        boxShadow: `0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px ${info.info.color}22`,
+        zIndex: 50,
+        backdropFilter: 'blur(8px)',
+      }}
+    >
+      {/* Header */}
+      <div style={{
+        background: info.info.color + '20',
+        padding: '12px 14px',
+        borderBottom: `1px solid ${info.info.color}33`,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+        position: 'sticky', top: 0, zIndex: 2,
+        backdropFilter: 'blur(8px)',
+      }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{info.info.title}</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{info.info.subtitle}</div>
+        </div>
+        <button onClick={onClose} style={{
+          background: 'transparent', border: 'none',
+          color: 'rgba(255,255,255,0.4)', cursor: 'pointer',
+          fontSize: 16, padding: '0 2px', lineHeight: 1, flexShrink: 0,
+        }}>✕</button>
+      </div>
+
+      {/* Sections */}
+      <div style={{ padding: '10px 14px' }}>
+        {info.info.sections.map((s, i) => (
+          <div key={i} style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: info.info.color, textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 6 }}>{s.label}</div>
+            {s.code && (
+              <div style={{ background: '#050508', borderRadius: 7, padding: '8px 10px', fontFamily: 'monospace', fontSize: 10.5, color: '#a8b4d8', lineHeight: 1.7, whiteSpace: 'pre', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.06)' }}>{s.code}</div>
+            )}
+            {s.bullets && (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {s.bullets.map((b, j) => (
+                  <li key={j} style={{ fontSize: 12, color: 'rgba(200,210,230,0.85)', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', lineHeight: 1.5, display: 'flex', gap: 6 }}>
+                    <span style={{ color: info.info.color, minWidth: 8 }}>›</span>{b}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {s.warn && <div style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 7, padding: '8px 10px', fontSize: 12, color: '#f59e0b', lineHeight: 1.5 }}>⚠ {s.warn}</div>}
+            {s.info && <div style={{ background: 'rgba(79,142,247,0.1)', border: '1px solid rgba(79,142,247,0.3)', borderRadius: 7, padding: '8px 10px', fontSize: 12, color: '#4f8ef7', lineHeight: 1.5 }}>ℹ {s.info}</div>}
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
 
 export default function PacketLab() {
   const [mode, setMode] = useState('universe');
@@ -27,18 +86,15 @@ export default function PacketLab() {
   const [universePlaying, setUniversePlaying] = useState(true);
   const [invertY, setInvertY] = useState(false);
   const [followPacket, setFollowPacket] = useState(false);
-  const [resetSignal, setResetSignal] = useState(0);  // increment to trigger reset
-  const [activeNodeInfo, setActiveNodeInfo] = useState(null); // { nodeId, info } from universe
+  const [resetSignal, setResetSignal] = useState(0);
+  const [activeNodeInfo, setActiveNodeInfo] = useState(null);
 
   const handleStoryStep = useCallback((scenarioKey, stepIndex) => {
     setUniverseScenario(scenarioKey);
     setUniverseStep(stepIndex);
   }, []);
 
-  const handleReset = () => {
-    setFollowPacket(false);
-    setResetSignal(s => s + 1);
-  };
+  const handleReset = () => { setFollowPacket(false); setResetSignal(s => s + 1); };
 
   return (
     <div>
@@ -68,10 +124,10 @@ export default function PacketLab() {
         ))}
       </div>
 
-      {/* Universe — always mounted so it doesn't reload Three.js on tab switch */}
+      {/* Universe — always mounted */}
       <div style={{ display: mode === 'universe' ? 'block' : 'none' }}>
 
-        {/* Scenario + controls row */}
+        {/* Controls */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           {SCENARIO_KEYS.map(k => (
             <button key={k} onClick={() => { setUniverseScenario(k); setUniverseStep(-1); setUniversePlaying(true); setActiveNodeInfo(null); }} style={{
@@ -82,201 +138,55 @@ export default function PacketLab() {
               color: universeScenario === k ? '#fff' : 'var(--text2)',
             }}>{SCENARIO_LABELS[k]}</button>
           ))}
-
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Reset / center */}
-            <button onClick={handleReset} style={{
-              padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600,
-              border: '1px solid var(--border)', background: 'transparent',
-              color: 'var(--text2)', cursor: 'pointer',
-            }} title="Reset camera to center, zoomed out">⊙ Reset</button>
-
-            {/* Follow packet toggle */}
-            <button onClick={() => setFollowPacket(f => !f)} style={{
-              padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600,
-              border: '1px solid', cursor: 'pointer',
-              background: followPacket ? 'rgba(79,142,247,0.2)' : 'transparent',
-              borderColor: followPacket ? 'rgba(79,142,247,0.5)' : 'var(--border)',
-              color: followPacket ? 'var(--blue)' : 'var(--text3)',
-            }} title="Camera follows the packet">
+            <button onClick={handleReset} style={{ padding:'5px 12px', borderRadius:8, fontSize:11, fontWeight:600, border:'1px solid var(--border)', background:'transparent', color:'var(--text2)', cursor:'pointer' }} title="Reset camera">⊙ Reset</button>
+            <button onClick={() => setFollowPacket(f => !f)} style={{ padding:'5px 12px', borderRadius:8, fontSize:11, fontWeight:600, border:'1px solid', cursor:'pointer', background:followPacket?'rgba(79,142,247,0.2)':'transparent', borderColor:followPacket?'rgba(79,142,247,0.5)':'var(--border)', color:followPacket?'var(--blue)':'var(--text3)' }}>
               {followPacket ? '🎯 Following' : '🎯 Follow'}
             </button>
-
-            {/* Invert Y */}
-            <button onClick={() => setInvertY(y => !y)} style={{
-              padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600,
-              border: '1px solid', cursor: 'pointer',
-              background: invertY ? 'rgba(155,127,244,0.2)' : 'transparent',
-              borderColor: invertY ? 'rgba(155,127,244,0.5)' : 'var(--border)',
-              color: invertY ? 'var(--purple)' : 'var(--text3)',
-            }} title="Invert vertical orbit">↕ Inv Y</button>
-
-            {/* Play/Pause */}
-            <button onClick={() => setUniversePlaying(p => !p)} style={{
-              padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-              border: '1px solid var(--border)', background: 'transparent',
-              color: universePlaying ? 'var(--amber)' : 'var(--green)', cursor: 'pointer',
-            }}>{universePlaying ? '⏸ Pause' : '▶ Play'}</button>
+            <button onClick={() => setInvertY(y => !y)} style={{ padding:'5px 10px', borderRadius:8, fontSize:11, fontWeight:600, border:'1px solid', cursor:'pointer', background:invertY?'rgba(155,127,244,0.2)':'transparent', borderColor:invertY?'rgba(155,127,244,0.5)':'var(--border)', color:invertY?'var(--purple)':'var(--text3)' }}>↕ Inv Y</button>
+            <button onClick={() => setUniversePlaying(p => !p)} style={{ padding:'5px 14px', borderRadius:8, fontSize:12, fontWeight:600, border:'1px solid var(--border)', background:'transparent', color:universePlaying?'var(--amber)':'var(--green)', cursor:'pointer' }}>{universePlaying ? '⏸ Pause' : '▶ Play'}</button>
           </div>
         </div>
 
-        {/* 3D canvas + sidebar layout */}
-        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+        {/* Canvas — info overlay lives INSIDE so fullscreen works */}
+        <div style={{ height: 500, borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)', position: 'relative', background: '#0a0a0f' }}>
+          <PacketUniverse
+            scenarioKey={universeScenario}
+            stepIndex={universeStep}
+            playing={universePlaying}
+            invertY={invertY}
+            followPacket={followPacket}
+            resetSignal={resetSignal}
+            onNodeInfo={setActiveNodeInfo}
+          />
 
-          {/* Canvas */}
-          <div style={{
-            flex: 1, minWidth: 0,
-            height: 500, borderRadius: 14, overflow: 'hidden',
-            border: '1px solid var(--border)', position: 'relative',
-            background: '#0a0a0f',
-          }}>
-            <PacketUniverse
-              scenarioKey={universeScenario}
-              stepIndex={universeStep}
-              playing={universePlaying}
-              invertY={invertY}
-              followPacket={followPacket}
-              resetSignal={resetSignal}
-              onNodeInfo={setActiveNodeInfo}
-            />
-            {/* Overlay hint */}
-            <div style={{
-              position: 'absolute', bottom: 12, left: 12,
-              fontSize: 11, color: 'rgba(255,255,255,0.25)',
-              pointerEvents: 'none', lineHeight: 1.6,
-            }}>
-              left-drag to orbit · mid-drag to pan<br />
-              scroll to zoom · click node for info
-            </div>
-            {/* Scenario label */}
-            <div style={{
-              position: 'absolute', top: 12, left: 12,
-              fontSize: 12, fontWeight: 600,
-              color: SCENARIO_COLORS[universeScenario],
-              background: 'rgba(10,10,15,0.8)',
-              padding: '4px 10px', borderRadius: 8,
-              border: `1px solid ${SCENARIO_COLORS[universeScenario]}44`,
-              pointerEvents: 'none',
-            }}>
-              {SCENARIO_LABELS[universeScenario]}
-            </div>
-            {followPacket && (
-              <div style={{
-                position: 'absolute', top: 12, right: 12,
-                fontSize: 11, fontWeight: 600, color: 'var(--blue)',
-                background: 'rgba(10,10,15,0.8)',
-                padding: '4px 10px', borderRadius: 8,
-                border: '1px solid rgba(79,142,247,0.4)',
-                pointerEvents: 'none',
-              }}>🎯 Following packet</div>
-            )}
-          </div>
-
-          {/* Node info sidebar */}
+          {/* Node info overlay — absolute inside canvas, works in fullscreen */}
           <AnimatePresence>
             {activeNodeInfo && (
-              <motion.div
-                key={activeNodeInfo.nodeId}
-                initial={{ opacity: 0, x: 16, width: 0 }}
-                animate={{ opacity: 1, x: 0, width: 320 }}
-                exit={{ opacity: 0, x: 16, width: 0 }}
-                transition={{ duration: 0.22 }}
-                style={{
-                  width: 320, minWidth: 320, flexShrink: 0,
-                  background: 'var(--bg2)',
-                  border: `1px solid ${activeNodeInfo.info.color}55`,
-                  borderRadius: 14,
-                  height: 500, overflowY: 'auto',
-                  boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px ${activeNodeInfo.info.color}22`,
-                }}
-              >
-                {/* Sidebar header */}
-                <div style={{
-                  background: activeNodeInfo.info.color + '18',
-                  padding: '14px 16px',
-                  borderBottom: `1px solid ${activeNodeInfo.info.color}33`,
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                  position: 'sticky', top: 0, zIndex: 2,
-                }}>
-                  <div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{activeNodeInfo.info.title}</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>{activeNodeInfo.info.subtitle}</div>
-                  </div>
-                  <button onClick={() => setActiveNodeInfo(null)} style={{
-                    background: 'transparent', border: 'none',
-                    color: 'rgba(255,255,255,0.35)', cursor: 'pointer',
-                    fontSize: 18, padding: '0 4px', lineHeight: 1, flexShrink: 0,
-                  }}>✕</button>
-                </div>
-
-                {/* Sidebar sections */}
-                <div style={{ padding: '12px 16px' }}>
-                  {activeNodeInfo.info.sections.map((s, i) => (
-                    <div key={i} style={{ marginBottom: 16 }}>
-                      <div style={{
-                        fontSize: 10, fontWeight: 700,
-                        color: activeNodeInfo.info.color,
-                        textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 8,
-                      }}>{s.label}</div>
-                      {s.code && (
-                        <div style={{
-                          background: '#0a0a0f', borderRadius: 8,
-                          padding: '10px 12px', fontFamily: 'monospace',
-                          fontSize: 11, color: '#a8b4d8', lineHeight: 1.75,
-                          whiteSpace: 'pre', overflowX: 'auto',
-                          border: '1px solid rgba(255,255,255,0.06)',
-                        }}>{s.code}</div>
-                      )}
-                      {s.bullets && (
-                        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                          {s.bullets.map((b, j) => (
-                            <li key={j} style={{
-                              fontSize: 13, color: 'var(--text2)',
-                              padding: '5px 0', borderBottom: '1px solid var(--border)',
-                              lineHeight: 1.5, display: 'flex', gap: 8,
-                            }}>
-                              <span style={{ color: activeNodeInfo.info.color, minWidth: 10, marginTop: 1 }}>›</span>
-                              {b}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      {s.warn && (
-                        <div style={{
-                          background: 'var(--amber-bg)',
-                          border: '1px solid rgba(245,158,11,0.3)',
-                          borderRadius: 8, padding: '10px 12px',
-                          fontSize: 13, color: 'var(--amber)', lineHeight: 1.6,
-                        }}>⚠ {s.warn}</div>
-                      )}
-                      {s.info && (
-                        <div style={{
-                          background: 'var(--blue-bg)',
-                          border: '1px solid rgba(79,142,247,0.3)',
-                          borderRadius: 8, padding: '10px 12px',
-                          fontSize: 13, color: 'var(--blue)', lineHeight: 1.6,
-                        }}>ℹ {s.info}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
+              <NodeInfoOverlay info={activeNodeInfo} onClose={() => setActiveNodeInfo(null)} />
             )}
           </AnimatePresence>
+
+          {/* Hint */}
+          <div style={{ position:'absolute', bottom:12, left:12, fontSize:11, color:'rgba(255,255,255,0.22)', pointerEvents:'none', lineHeight:1.6 }}>
+            left-drag to orbit · mid-drag to pan<br />scroll to zoom · click node for info
+          </div>
+          {/* Scenario label */}
+          <div style={{ position:'absolute', top:12, left:12, fontSize:12, fontWeight:600, color:SCENARIO_COLORS[universeScenario], background:'rgba(10,10,15,0.8)', padding:'4px 10px', borderRadius:8, border:`1px solid ${SCENARIO_COLORS[universeScenario]}44`, pointerEvents:'none' }}>
+            {SCENARIO_LABELS[universeScenario]}
+          </div>
+          {followPacket && (
+            <div style={{ position:'absolute', bottom:12, right:52, fontSize:11, fontWeight:600, color:'var(--blue)', background:'rgba(10,10,15,0.8)', padding:'4px 10px', borderRadius:8, border:'1px solid rgba(79,142,247,0.4)', pointerEvents:'none' }}>🎯 Following</div>
+          )}
         </div>
 
-        {/* Path step scrubber */}
-        <div style={{ marginTop: 12, background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
-          <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 8 }}>
-            Step through the path — or switch to Stories / Technical Trace for full detail
-          </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <button onClick={() => { setUniverseStep(-1); setUniversePlaying(true); }} style={stepBtn(universeStep === -1, SCENARIO_COLORS[universeScenario])}>
-              Auto
-            </button>
+        {/* Step scrubber */}
+        <div style={{ marginTop:12, background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 14px' }}>
+          <div style={{ fontSize:12, color:'var(--text3)', marginBottom:8 }}>Step through the path — or switch to Stories / Technical Trace for full detail</div>
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+            <button onClick={() => { setUniverseStep(-1); setUniversePlaying(true); }} style={stepBtn(universeStep === -1, SCENARIO_COLORS[universeScenario])}>Auto</button>
             {getPathLabels(universeScenario).map((label, i) => (
-              <button key={i} onClick={() => { setUniverseStep(i); setUniversePlaying(false); }}
-                style={stepBtn(universeStep === i, SCENARIO_COLORS[universeScenario])}>
+              <button key={i} onClick={() => { setUniverseStep(i); setUniversePlaying(false); }} style={stepBtn(universeStep === i, SCENARIO_COLORS[universeScenario])}>
                 {i + 1}. {label}
               </button>
             ))}
@@ -284,19 +194,15 @@ export default function PacketLab() {
         </div>
       </div>
 
-      {/* Stories */}
+      {/* Stories / Trace */}
       <AnimatePresence mode="wait">
         {mode === 'stories' && (
-          <motion.div key="stories"
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
+          <motion.div key="stories" initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-6 }} transition={{ duration:0.18 }}>
             <PacketStories onStep={handleStoryStep} />
           </motion.div>
         )}
         {mode === 'trace' && (
-          <motion.div key="trace"
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
+          <motion.div key="trace" initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-6 }} transition={{ duration:0.18 }}>
             <PacketTrace />
           </motion.div>
         )}
@@ -306,22 +212,16 @@ export default function PacketLab() {
 }
 
 function stepBtn(active, color) {
-  return {
-    padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500,
-    border: `1px solid ${active ? color : 'var(--border)'}`,
-    background: active ? color + '22' : 'transparent',
-    color: active ? color : 'var(--text3)', cursor: 'pointer',
-    transition: 'all .12s', whiteSpace: 'nowrap',
-  };
+  return { padding:'4px 10px', borderRadius:6, fontSize:11, fontWeight:500, border:`1px solid ${active?color:'var(--border)'}`, background:active?color+'22':'transparent', color:active?color:'var(--text3)', cursor:'pointer', transition:'all .12s', whiteSpace:'nowrap' };
 }
 
 function getPathLabels(key) {
   const labels = {
-    pablo: ['calls mongo-0', 'resolv.conf', 'CoreDNS', 'EndpointSlice', 'CNI', 'mongo-0'],
-    nadia: ['calls mongodb', 'CoreDNS', 'NXDOMAIN', 'FQDN retry', 'CoreDNS', 'connected'],
-    carlos: ['calls stripe.com', 'CoreDNS', 'node DNS', 'cloud DNS', 'stripe.com'],
-    reina: ['calls backend', 'CoreDNS', 'ClusterIP', 'kube-proxy', 'empty endpoints'],
-    maya: ['checkout app', 'sidecar proxy', 'DNS→ClusterIP', 'mTLS', 'dest proxy', 'payment app'],
+    pablo: ['calls mongo-0','resolv.conf','CoreDNS','EndpointSlice','CNI','mongo-0'],
+    nadia: ['calls mongodb','CoreDNS','NXDOMAIN','FQDN retry','CoreDNS','connected'],
+    carlos: ['calls stripe.com','CoreDNS','node DNS','cloud DNS','stripe.com'],
+    reina: ['calls backend','CoreDNS','ClusterIP','kube-proxy','empty endpoints'],
+    maya: ['checkout app','sidecar proxy','DNS→ClusterIP','mTLS','dest proxy','payment app'],
   };
   return labels[key] || [];
 }
