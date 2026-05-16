@@ -230,8 +230,7 @@ export default function PacketTrace() {
         {!activeStep && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12, padding: '1.5rem', textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>▶</div>
-            <div style={{ fontSize: 14, color: 'var(--text2)' }}>Press Play or click any step to begin the trace</div>
+            <div style={{ fontSize: 14, color: 'var(--text3)' }}>Select a scenario above, then step through or play the trace</div>
           </motion.div>
         )}
       </AnimatePresence>

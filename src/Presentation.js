@@ -385,7 +385,15 @@ export default function Presentation() {
   const slide = SLIDES[active];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 20, minHeight: '70vh' }}>
+    <div>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Teaching Notes</div>
+        <div style={{ fontSize: 14, color: 'var(--text2)' }}>
+          Your presenter cheat sheet — talking points, timing, tips, and demo cues for the 15-minute session.
+          This is for <strong style={{ color: 'var(--text)' }}>your eyes only</strong> while you prepare, not a deck to show the audience.
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 20, minHeight: '70vh' }}>
       {/* Sidebar */}
       <div>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>
@@ -395,7 +403,7 @@ export default function Presentation() {
           <SlideCard key={s.id} slide={s} active={i === active} onClick={() => setActive(i)} />
         ))}
         <div style={{ marginTop: 16, padding: '10px 14px', background: 'var(--bg3)', borderRadius: 10, fontSize: 12, color: 'var(--text3)', lineHeight: 1.6 }}>
-          💡 Each slide has a presenter tip. Use this as your teaching notes.
+          💡 Each slide has a presenter tip. Use this as your teaching notes before the session — not a deck to show the audience.
         </div>
       </div>
 
@@ -418,6 +426,7 @@ export default function Presentation() {
         <AnimatePresence mode="wait">
           <SlideContent key={slide.id} slide={slide} />
         </AnimatePresence>
+      </div>
       </div>
     </div>
   );

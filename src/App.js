@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Accordion } from './Accordion';
-import PacketTrace from './PacketTrace';
+import PacketLab from './PacketLab';
 import Presentation from './Presentation';
-import PacketStories from './PacketStories';
 import MyNotes from './MyNotes';
 import './App.css';
 
 const tabs = [
-  { id: 'trace', label: '▶ Packet Trace' },
+  { id: 'lab', label: '🔬 Packet Lab' },
   { id: 'chain', label: 'DNS Chain' },
   { id: 'coredns', label: 'CoreDNS Internals' },
   { id: 'headless', label: 'Headless Services' },
@@ -16,9 +15,8 @@ const tabs = [
   { id: 'debug', label: 'Debug Toolkit' },
   { id: 'mesh', label: 'Service Mesh' },
   { id: 'wars', label: 'War Stories' },
-  { id: 'stories', label: '📖 Packet Stories' },
   { id: 'notes', label: '📎 My Notes' },
-  { id: 'present', label: '🎤 Present' },
+  { id: 'present', label: '🎙 Teaching Notes' },
 ];
 
 const fade = {
@@ -146,7 +144,31 @@ function ChainSection() {
 EndpointSlice (list of healthy pod IPs)
   ↓ watched by
 kube-proxy (writes iptables DNAT rules)`}</Code>
-        <Alert type="info">Use the Packet Trace tab to watch this entire flow animate step by step for different scenarios.</Alert>
+        <Alert type="info">Use the Packet Lab to watch this entire flow animate step by step for different scenarios.</Alert>
+      </Accordion>
+
+      <Accordion title="⚡ When headless services change this chain" accent="#2dd4bf">
+        <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7, marginBottom: 12 }}>
+          The chain above describes a <strong style={{ color: 'var(--text)' }}>regular service</strong>.
+          When you use a <strong style={{ color: 'var(--teal)' }}>headless service</strong> (<code>clusterIP: None</code>),
+          steps 2 and 3 change completely:
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div style={{ background: 'var(--bg3)', border: '1px solid rgba(79,142,247,0.3)', borderRadius: 10, padding: '1rem' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--blue)', marginBottom: 8 }}>Regular service (ClusterIP)</div>
+            <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.7 }}>Step 2: CoreDNS returns a <strong style={{ color: 'var(--text)' }}>single virtual ClusterIP</strong><br />Step 3: kube-proxy DNAT rewrites to any pod<br />Result: load-balanced, any healthy pod</div>
+          </div>
+          <div style={{ background: 'var(--bg3)', border: '1px solid rgba(45,212,191,0.3)', borderRadius: 10, padding: '1rem' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', marginBottom: 8 }}>Headless service (clusterIP: None)</div>
+            <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.7 }}>Step 2: CoreDNS returns <strong style={{ color: 'var(--text)' }}>direct pod IPs</strong> (all of them)<br />Step 3: kube-proxy not involved<br />Result: direct connection to a specific pod</div>
+          </div>
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7 }}>
+          This is why StatefulSets use headless services. <code>mongo-0.mongodb.default.svc.cluster.local</code> always
+          resolves to the same pod — even after it reschedules to a different node with a different IP.
+          The name is stable. The IP can change. The chain stays correct.
+        </p>
+        <Alert type="info">See the Headless Services tab for the full story, or watch Pablo's journey in the Packet Lab — he uses a headless service.</Alert>
       </Accordion>
     </motion.div>
   );
@@ -629,22 +651,49 @@ function MeshSection() {
         </ul>
       </Accordion>
 
-      <Accordion title="Linkerd viz vs Istio/Kiali — honest comparison" accent="#9b7ff4">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-          <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 10, padding: "1rem" }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)", marginBottom: 8 }}>Linkerd viz</div>
-            <ul style={{ paddingLeft: "1.2rem" }}>
-              {["Topology graph with live success rates on edges","Golden metrics per service/namespace/route","tap: live request streaming, no sampling","linkerd viz edges shows proxy identities","Lightweight. Intentionally simple."].map(t => <li key={t} style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.6, marginBottom: 3 }}>{t}</li>)}
-            </ul>
-          </div>
-          <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 10, padding: "1rem" }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--blue)", marginBottom: 8 }}>Istio + Kiali</div>
-            <ul style={{ paddingLeft: "1.2rem" }}>
-              {["Richer interactive topology graph","Animated traffic flows in real time","Click services to drill into routes visually","Protocol-level filtering in UI","More operational complexity"].map(t => <li key={t} style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.6, marginBottom: 3 }}>{t}</li>)}
-            </ul>
-          </div>
+      <Accordion title="Linkerd Tap — what you're actually seeing" accent="#9b7ff4">
+        <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7, marginBottom: 10 }}>
+          Linkerd Tap streams every live request through a deployment in real time — no sampling. What looks like a boring table
+          is actually a raw feed. <strong style={{ color: 'var(--text)' }}>In steady state it's dull by design.</strong> When things break, it becomes
+          your most valuable debugging tool.
+        </p>
+        <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, padding: '1rem', marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', marginBottom: 8 }}>Healthy (boring ✅):</div>
+          <pre style={{ fontSize: 11, color: '#4ade80', fontFamily: 'monospace', lineHeight: 1.7 }}>{`FROM 10.36.0.32  GET /   2ms   200
+FROM 10.36.0.32  GET /   4ms   200
+FROM 10.36.0.32  GET /   2ms   200`}</pre>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', margin: '10px 0 8px' }}>Breaking incident (very interesting 🚨):</div>
+          <pre style={{ fontSize: 11, color: '#f87171', fontFamily: 'monospace', lineHeight: 1.7 }}>{`FROM 10.36.0.32  GET /api/payment  847ms   503
+FROM 10.36.0.32  GET /api/payment  1203ms  503
+FROM 10.36.0.99  GET /api/payment  2ms     200  ← different source?`}</pre>
         </div>
-        <Alert type="info">Linkerd's tap feature is its standout. Live request streaming without sampling — more useful than a pretty graph when actually debugging production.</Alert>
+        <Code>{`# Run against your demo-crm right now:
+linkerd viz tap deployment/demo-crm --namespace default
+
+# Filter to only errors:
+linkerd viz tap deployment/demo-crm --to deployment/mongodb \\\n  --namespace default`}</Code>
+        <Alert type="info">The Linkerd Tap screenshot in your My Notes is from your actual cluster. Save it as a war story reference.</Alert>
+      </Accordion>
+
+      <Accordion title="Kiali vs Hubble vs Linkerd viz — visual topology comparison" accent="#2dd4bf">
+        <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7, marginBottom: 12 }}>
+          If you want the animated topology graph (services as nodes, traffic as colored animated lines), you need either Kiali (Istio) or Hubble (Cilium). Linkerd's graph is intentionally minimal.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 12 }}>
+          {[
+            { name: 'Linkerd viz', color: '#9b7ff4', items: ['Basic topology graph', 'Tap: best live request feed', 'Auto mTLS (zero config)', 'Lightweight, stable', 'Already on your cluster ✅'] },
+            { name: 'Istio + Kiali', color: '#4f8ef7', items: ['Rich animated topology', 'Traffic flows as lines', 'Drill-down by route', 'Complex to operate', 'Requires full Istio install'] },
+            { name: 'Cilium + Hubble', color: '#2dd4bf', items: ['Real-time flow map', 'eBPF-native (fast)', 'L7 visibility', 'Needs Cilium as CNI', 'Replaces kube-proxy too'] },
+          ].map(t => (
+            <div key={t.name} style={{ background: 'var(--bg3)', border: `1px solid ${t.color}44`, borderRadius: 10, padding: '1rem' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: t.color, marginBottom: 8 }}>{t.name}</div>
+              {t.items.map(item => (
+                <div key={item} style={{ fontSize: 11, color: 'var(--text2)', padding: '3px 0', borderBottom: '1px solid var(--border)', lineHeight: 1.5 }}>{item}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+        <Alert type="info">You already have Linkerd. If you want Kiali-level visuals, the honest answer is: install Istio in a separate test cluster. Don't replace Linkerd on a running cluster.</Alert>
       </Accordion>
     </motion.div>
   );
@@ -715,7 +764,7 @@ function WarSection() {
 
 /* ── ROOT — sections rendered as components, not static JSX, so state persists ── */
 export default function App() {
-  const [active, setActive] = useState('trace');
+  const [active, setActive] = useState('lab');
 
   return (
     <div className="app">
@@ -734,15 +783,12 @@ export default function App() {
         <div className="hero-eyebrow">Kubernetes Service Discovery & DNS</div>
         <h1>When Kubernetes breaks,<br /><em>it's always DNS.</em></h1>
         <p>A practitioner's guide to service discovery, CoreDNS internals, production war stories, and the debugging toolkit you'll actually need.</p>
-        <div style={{ marginTop: 12 }}>
-          {[['blue', 'DNS Chain'], ['purple', 'CoreDNS'], ['teal', 'Headless'], ['amber', 'NDOTS'], ['red', 'War Stories'], ['coral', 'Service Mesh']].map(([c, l]) => <Tag key={l} color={c}>{l}</Tag>)}
-        </div>
+
       </div>
 
       <main className="main">
         <AnimatePresence mode="wait">
           <motion.div key={active} {...fade}>
-            {active === 'trace' && <PacketTrace />}
             {active === 'chain' && <ChainSection />}
             {active === 'coredns' && <CoreDNSSection />}
             {active === 'headless' && <HeadlessSection />}
@@ -750,7 +796,7 @@ export default function App() {
             {active === 'debug' && <DebugSection />}
             {active === 'mesh' && <MeshSection />}
             {active === 'wars' && <WarSection />}
-            {active === 'stories' && <PacketStories />}
+            {active === 'lab' && <PacketLab />}
             {active === 'notes' && <MyNotes />}
             {active === 'present' && <Presentation />}
           </motion.div>
