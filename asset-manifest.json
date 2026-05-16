@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/k8s-dns-guide/static/css/main.387339dc.css",
-    "main.js": "/k8s-dns-guide/static/js/main.6412a222.js",
+    "main.js": "/k8s-dns-guide/static/js/main.07b5249d.js",
     "static/js/453.404f06c7.chunk.js": "/k8s-dns-guide/static/js/453.404f06c7.chunk.js",
     "index.html": "/k8s-dns-guide/index.html",
     "main.387339dc.css.map": "/k8s-dns-guide/static/css/main.387339dc.css.map",
-    "main.6412a222.js.map": "/k8s-dns-guide/static/js/main.6412a222.js.map",
+    "main.07b5249d.js.map": "/k8s-dns-guide/static/js/main.07b5249d.js.map",
     "453.404f06c7.chunk.js.map": "/k8s-dns-guide/static/js/453.404f06c7.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.387339dc.css",
-    "static/js/main.6412a222.js"
+    "static/js/main.07b5249d.js"
   ]
 }
