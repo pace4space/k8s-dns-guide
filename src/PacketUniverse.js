@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Node info cards ──────────────────────────────────────────────────────────
 // Keyed by node id — shown in the popup when a node is clicked.
