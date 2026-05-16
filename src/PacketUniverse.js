@@ -987,6 +987,7 @@ const TAIL_LEN = 12, SPEED = 0.009; // slowed from 0.018
 export default function PacketUniverse({ scenarioKey = 'pablo', stepIndex = -1, playing = false, invertY = false, followPacket = false, resetSignal = 0, onNodeInfo }) {
   const canvasRef = useRef();
   const containerRef = useRef();
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const stateRef = useRef({});
   const [threeLoaded, setThreeLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -1178,12 +1179,48 @@ export default function PacketUniverse({ scenarioKey = 'pablo', stepIndex = -1, 
   // Follow packet: let animate loop read stateRef.current.followPacket
   useEffect(() => { if (stateRef.current) stateRef.current.followPacket = followPacket; }, [followPacket]);
 
+  // Fullscreen toggle
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen();
+    }
+  }, []);
+
+  useEffect(() => {
+    const onChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+      // Let Three.js resize handler fire after the browser repaints
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
   if (loadError) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text3)', fontSize: 13 }}>3D engine failed to load.</div>;
   if (!threeLoaded) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text3)', fontSize: 13 }}>Loading 3D engine…</div>;
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', background: '#0a0a0f' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', cursor: 'grab' }} />
+      {/* Fullscreen button */}
+      <button
+        onClick={toggleFullscreen}
+        title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+        style={{
+          position: 'absolute', top: 12, right: 12,
+          background: 'rgba(10,10,15,0.75)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          borderRadius: 8, color: 'rgba(255,255,255,0.6)',
+          cursor: 'pointer', fontSize: 15,
+          width: 32, height: 32,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all .15s',
+        }}
+      >{isFullscreen ? '✕' : '⤢'}</button>
     </div>
   );
 }

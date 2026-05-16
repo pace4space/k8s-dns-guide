@@ -150,3 +150,7 @@
 /* SECTION TITLE */
 .section-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 6px; margin-top: 8px; }
 .section-sub { font-size: 14px; color: var(--text2); margin-bottom: 20px; }
+
+/* 3D universe fullscreen */
+:fullscreen canvas, ::backdrop { background: #0a0a0f; }
+:fullscreen > canvas { width: 100vw !important; height: 100vh !important; }

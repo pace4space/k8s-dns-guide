@@ -81,13 +81,13 @@ function parseTimecode(tc) {
 
 // ─── Presets & pinned ─────────────────────────────────────────────────────────
 const PRESETS = [
-  { label: 'Service Mesh: Connect/Secure/Monitor reveal', url: 'https://youtu.be/cjhb7_uwzDk?start=263&end=284', start: '263', end: '284', note: 'KubeCon — "Service Mesh In Kubernetes Explained"\n4:23–4:44: The Connect / Secure / Monitor reveal slide.\nGreat laugh moment. Show this when introducing service mesh boundary.', tag: 'service-mesh' },
+  { label: 'Service Mesh: Connect/Secure/Monitor reveal', url: 'https://youtu.be/cjhb7_uwzDk?start=262&end=284', start: '262', end: '284', note: 'KubeCon — "Service Mesh In Kubernetes Explained"\n4:23–4:44: The Connect / Secure / Monitor reveal slide.\nGreat laugh moment. Show this when introducing service mesh boundary.', tag: 'service-mesh' },
   { label: "Datadog: It's always DNS — KubeCon 2019", url: 'https://www.youtube.com/watch?v=QKI-JRs2RIE', start: '', end: '', note: 'Laurent Bernaille & Robert Boll, Datadog.\nSlide #1: "It\'s ~~never~~ always DNS." Use as opening hook.\nCovers: ndots, autopath trap, conntrack race, CronJob IOPS spike.', tag: 'war-story' },
   { label: 'Understanding CoreDNS in Kubernetes', url: 'https://www.youtube.com/watch?v=qRiLmLACYSY', start: '', end: '', note: 'Deep dive: CoreDNS deployment anatomy, plugin list, autopath internals.\n16:00 resolving queries | 21:20 cache tuning | 24:30 kubernetes plugin options | 25:30 full plugin list.', tag: 'coredns' },
 ];
 
 const PINNED = [
-  { id: 'pinned-mesh-reveal', type: 'youtube', label: '🎤 Service Mesh reveal — show this in your presentation', url: 'https://youtu.be/cjhb7_uwzDk?start=263&end=284', start: '263', end: '284', note: 'KubeCon — "Service Mesh In Kubernetes Explained"\n4:23–4:44 · The Connect / Secure / Monitor reveal.\nPlay this when you introduce the service mesh boundary. Gets a laugh.', tag: 'service-mesh', pinned: true },
+  { id: 'pinned-mesh-reveal', type: 'youtube', label: '🎤 Service Mesh reveal — show this in your presentation', url: 'https://youtu.be/cjhb7_uwzDk?start=262&end=284', start: '262', end: '284', note: 'KubeCon — "Service Mesh In Kubernetes Explained"\n4:23–4:44 · The Connect / Secure / Monitor reveal.\nPlay this when you introduce the service mesh boundary. Gets a laugh.', tag: 'service-mesh', pinned: true },
 ];
 
 const TAGS = ['all', 'coredns', 'service-mesh', 'war-story', 'ndots', 'headless', 'debug', 'other'];
