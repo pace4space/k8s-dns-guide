@@ -19,14 +19,17 @@ function youtubeEmbedUrl(url, start, end) {
     let videoId = '';
     const u = new URL(url);
     if (u.hostname.includes('youtu.be')) {
-      videoId = u.pathname.slice(1);
+      videoId = u.pathname.slice(1).split('?')[0]; // strip any trailing ?params from path
     } else {
       videoId = u.searchParams.get('v') || '';
     }
     if (!videoId) return null;
+    // Also extract start/end from URL params if not explicitly passed
+    const urlStart = start || u.searchParams.get('start') || '';
+    const urlEnd   = end   || u.searchParams.get('end')   || '';
     let embed = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0`;
-    if (start) embed += `&start=${start}`;
-    if (end) embed += `&end=${end}`;
+    if (urlStart) embed += `&start=${urlStart}`;
+    if (urlEnd)   embed += `&end=${urlEnd}`;
     return embed;
   } catch { return null; }
 }
@@ -43,7 +46,7 @@ function parseTimecode(tc) {
 const PRESETS = [
   {
     label: 'Service Mesh: Connect/Secure/Monitor reveal',
-    url: 'https://youtu.be/cjhb7_uwzDk',
+    url: 'https://youtu.be/cjhb7_uwzDk?start=263&end=284',
     start: '263', end: '284',
     note: 'KubeCon — "Service Mesh In Kubernetes Explained"\n4:23–4:44: The Connect / Secure / Monitor reveal slide.\nGreat laugh moment. Show this when introducing service mesh boundary.',
     tag: 'service-mesh',
@@ -61,6 +64,21 @@ const PRESETS = [
     start: '', end: '',
     note: 'Deep dive: CoreDNS deployment anatomy, plugin list, autopath internals.\n16:00 resolving queries | 21:20 cache tuning | 24:30 kubernetes plugin options | 25:30 full plugin list.',
     tag: 'coredns',
+  },
+];
+
+// Permanent pinned clips — always shown at top, not stored in localStorage
+const PINNED = [
+  {
+    id: 'pinned-mesh-reveal',
+    type: 'youtube',
+    label: '🎤 Service Mesh reveal — show this in your presentation',
+    url: 'https://youtu.be/cjhb7_uwzDk?start=263&end=284',
+    start: '263',
+    end: '284',
+    note: 'KubeCon — "Service Mesh In Kubernetes Explained"\n4:23–4:44 · The Connect / Secure / Monitor reveal.\nPlay this when you introduce the service mesh boundary. Gets a laugh.',
+    tag: 'service-mesh',
+    pinned: true,
   },
 ];
 
@@ -390,6 +408,18 @@ export default function MyNotes() {
           <div style={{ fontSize:14, color:'var(--text2)', marginBottom:6 }}>{filterTag === 'all' ? 'No items yet.' : `No items tagged "${filterTag}".`}</div>
           <div style={{ fontSize:13, color:'var(--text3)', marginBottom:16 }}>Add YouTube clips with start/end times, architecture diagrams, or text notes.</div>
           <button onClick={() => { setEditing(null); setShowAdd(true); }} style={{ padding:'8px 18px', borderRadius:10, fontSize:13, fontWeight:600, border:'none', background:'var(--blue)', color:'#fff', cursor:'pointer' }}>+ Add your first item</button>
+        </div>
+      )}
+
+      {/* Pinned permanent items — always shown, never in localStorage */}
+      {(filterTag === 'all' || filterTag === 'service-mesh') && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 8 }}>📌 Pinned</div>
+          {PINNED.map(p => (
+            <div key={p.id} style={{ border: '1px solid rgba(155,127,244,0.35)', borderRadius: 14, overflow: 'hidden', marginBottom: 8, background: 'rgba(155,127,244,0.04)' }}>
+              <YouTubeCard item={p} onDelete={() => {}} onEdit={() => {}} />
+            </div>
+          ))}
         </div>
       )}
 
