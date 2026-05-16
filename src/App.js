@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Accordion } from './Accordion';
 import PacketTrace from './PacketTrace';
 import Presentation from './Presentation';
+import PacketStories from './PacketStories';
 import './App.css';
 
 const tabs = [
@@ -14,6 +15,7 @@ const tabs = [
   { id: 'debug', label: 'Debug Toolkit' },
   { id: 'mesh', label: 'Service Mesh' },
   { id: 'wars', label: 'War Stories' },
+  { id: 'stories', label: '📖 Packet Stories' },
   { id: 'present', label: '🎤 Present' },
 ];
 
@@ -746,6 +748,7 @@ export default function App() {
             {active === 'debug' && <DebugSection />}
             {active === 'mesh' && <MeshSection />}
             {active === 'wars' && <WarSection />}
+            {active === 'stories' && <PacketStories />}
             {active === 'present' && <Presentation />}
           </motion.div>
         </AnimatePresence>
