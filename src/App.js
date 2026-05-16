@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Accordion } from './Accordion';
 import PacketTrace from './PacketTrace';
+import Presentation from './Presentation';
 import './App.css';
 
 const tabs = [
@@ -13,6 +14,7 @@ const tabs = [
   { id: 'debug', label: 'Debug Toolkit' },
   { id: 'mesh', label: 'Service Mesh' },
   { id: 'wars', label: 'War Stories' },
+  { id: 'present', label: '🎤 Present' },
 ];
 
 const fade = {
@@ -580,6 +582,66 @@ function MeshSection() {
         </div>
         <Alert type="info">DNS is boring. Boring is good. A service mesh is interesting and complex. Only reach for it when boring isn't enough.</Alert>
       </Accordion>
+
+      <Accordion title="How a mesh relates to DNS — exact order of events" accent="#5a5a78">
+        <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.7, marginBottom: 10 }}>
+          A service mesh does not replace CoreDNS. It intercepts what happens <strong style={{color:"var(--text)"}}>after</strong> DNS resolves. Exact sequence:
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+          {[
+            { n: 1, c: "#4f8ef7", t: "App calls mongodb", d: "DNS resolves via CoreDNS to ClusterIP" },
+            { n: 2, c: "#9b7ff4", t: "App attempts TCP connect to ClusterIP", d: "kube-proxy DNAT rewrites to real pod IP" },
+            { n: 3, c: "#f59e0b", t: "Linkerd proxy intercepts TCP connection", d: "Sidecar intercepts before packet leaves pod" },
+            { n: 4, c: "#2dd4bf", t: "Proxy applies policies", d: "mTLS, retries, circuit breaking, telemetry" },
+            { n: 5, c: "#4ade80", t: "Packet leaves pod encrypted", d: "mTLS to destination sidecar. App never sees any of this." },
+          ].map(s => (
+            <div key={s.n} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "8px 10px", background: "var(--bg3)", borderRadius: 8 }}>
+              <div style={{ width: 22, height: 22, minWidth: 22, borderRadius: "50%", background: s.c, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#fff" }}>{s.n}</div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{s.t}</div>
+                <div style={{ fontSize: 12, color: "var(--text3)" }}>{s.d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <Alert type="info">Show <a href="https://youtu.be/cjhb7_uwzDk?t=263" target="_blank" rel="noreferrer" style={{color:"var(--blue)"}}>4:23-4:44 of this talk</a> at this point. Use the Presentation tab for full notes.</Alert>
+      </Accordion>
+
+      <Accordion title="NodeLocal DNSCache — corrected full chain" accent="#2dd4bf">
+        <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.7, marginBottom: 12 }}>
+          Confirmed by Claude Code running against a real cluster. NodeLocal DNSCache runs its own CoreDNS-format Corefile per node. The full chain:
+        </p>
+        <div style={{ background: "#0a0a0f", borderRadius: 8, padding: "12px 16px", marginBottom: 12 }}>
+          <pre style={{ fontSize: 12, color: "#a8b4d8", margin: 0 }}>{"pod → NodeLocal DNSCache (169.254.20.10)\n   → CoreDNS / kube-dns pods (on cache miss)\n   → upstream resolver (for external domains)"}</pre>
+        </div>
+        <ul style={{ paddingLeft: "1.2rem" }}>
+          {[
+            "169.254.20.10 is a link-local IP — only reachable on the local node",
+            "NodeLocal DNSCache runs a full CoreDNS instance per node (not just a dumb cache)",
+            "Uses TCP to talk upstream to CoreDNS — bypasses conntrack/netfilter entirely",
+            "Cache hit = instant response, never leaves the node",
+            "Cache miss = calls real CoreDNS pods via TCP, result cached for next time",
+          ].map(t => <li key={t} style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.7, marginBottom: 4 }}>{t}</li>)}
+        </ul>
+      </Accordion>
+
+      <Accordion title="Linkerd viz vs Istio/Kiali — honest comparison" accent="#9b7ff4">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 10, padding: "1rem" }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--purple)", marginBottom: 8 }}>Linkerd viz</div>
+            <ul style={{ paddingLeft: "1.2rem" }}>
+              {["Topology graph with live success rates on edges","Golden metrics per service/namespace/route","tap: live request streaming, no sampling","linkerd viz edges shows proxy identities","Lightweight. Intentionally simple."].map(t => <li key={t} style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.6, marginBottom: 3 }}>{t}</li>)}
+            </ul>
+          </div>
+          <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 10, padding: "1rem" }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--blue)", marginBottom: 8 }}>Istio + Kiali</div>
+            <ul style={{ paddingLeft: "1.2rem" }}>
+              {["Richer interactive topology graph","Animated traffic flows in real time","Click services to drill into routes visually","Protocol-level filtering in UI","More operational complexity"].map(t => <li key={t} style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.6, marginBottom: 3 }}>{t}</li>)}
+            </ul>
+          </div>
+        </div>
+        <Alert type="info">Linkerd's tap feature is its standout. Live request streaming without sampling — more useful than a pretty graph when actually debugging production.</Alert>
+      </Accordion>
     </motion.div>
   );
 }
@@ -684,6 +746,7 @@ export default function App() {
             {active === 'debug' && <DebugSection />}
             {active === 'mesh' && <MeshSection />}
             {active === 'wars' && <WarSection />}
+            {active === 'present' && <Presentation />}
           </motion.div>
         </AnimatePresence>
       </main>
