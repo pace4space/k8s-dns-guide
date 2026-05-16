@@ -4,6 +4,7 @@ import { Accordion } from './Accordion';
 import PacketTrace from './PacketTrace';
 import Presentation from './Presentation';
 import PacketStories from './PacketStories';
+import MyNotes from './MyNotes';
 import './App.css';
 
 const tabs = [
@@ -16,6 +17,7 @@ const tabs = [
   { id: 'mesh', label: 'Service Mesh' },
   { id: 'wars', label: 'War Stories' },
   { id: 'stories', label: '📖 Packet Stories' },
+  { id: 'notes', label: '📎 My Notes' },
   { id: 'present', label: '🎤 Present' },
 ];
 
@@ -749,6 +751,7 @@ export default function App() {
             {active === 'mesh' && <MeshSection />}
             {active === 'wars' && <WarSection />}
             {active === 'stories' && <PacketStories />}
+            {active === 'notes' && <MyNotes />}
             {active === 'present' && <Presentation />}
           </motion.div>
         </AnimatePresence>
