@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/k8s-dns-guide/static/css/main.387339dc.css",
-    "main.js": "/k8s-dns-guide/static/js/main.8e33149e.js",
+    "main.css": "/k8s-dns-guide/static/css/main.c85d1c87.css",
+    "main.js": "/k8s-dns-guide/static/js/main.c47d2072.js",
     "static/js/453.404f06c7.chunk.js": "/k8s-dns-guide/static/js/453.404f06c7.chunk.js",
     "index.html": "/k8s-dns-guide/index.html",
-    "main.387339dc.css.map": "/k8s-dns-guide/static/css/main.387339dc.css.map",
-    "main.8e33149e.js.map": "/k8s-dns-guide/static/js/main.8e33149e.js.map",
+    "main.c85d1c87.css.map": "/k8s-dns-guide/static/css/main.c85d1c87.css.map",
+    "main.c47d2072.js.map": "/k8s-dns-guide/static/js/main.c47d2072.js.map",
     "453.404f06c7.chunk.js.map": "/k8s-dns-guide/static/js/453.404f06c7.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.387339dc.css",
-    "static/js/main.8e33149e.js"
+    "static/css/main.c85d1c87.css",
+    "static/js/main.c47d2072.js"
   ]
 }
