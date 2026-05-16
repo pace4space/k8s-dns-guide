@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Node info cards ──────────────────────────────────────────────────────────
 // Keyed by node id — shown in the popup when a node is clicked.
@@ -1018,7 +1017,6 @@ export default function PacketUniverse({ scenarioKey = 'pablo', stepIndex = -1, 
       cancelAnimationFrame(stateRef.current.animFrame);
     }
     packetT = 0; packetSeg = 0; tailHistory = [];
-    setPopup(null);
 
     const { renderer, scene, camera, nodeMeshes } = buildScene(THREE, scenario, canvas);
     const packet = createPacket(THREE, scene, scenario.color);
@@ -1057,7 +1055,7 @@ export default function PacketUniverse({ scenarioKey = 'pablo', stepIndex = -1, 
           const rect2 = containerRef.current ? containerRef.current.getBoundingClientRect() : { left: 0, top: 0 };
           handleNodeClick(nodeId, e.clientX - rect2.left, e.clientY - rect2.top);
         } else {
-          setPopup(null);
+          if (onNodeInfo) onNodeInfo(null);
         }
       }
       isDragging = false;
@@ -1160,9 +1158,10 @@ export default function PacketUniverse({ scenarioKey = 'pablo', stepIndex = -1, 
       window.removeEventListener('mousemove', onMouseMove);
       canvas.removeEventListener('wheel', onWheel);
       window.removeEventListener('resize', onResize);
-      setPopup(null);
     };
-  }, [threeLoaded, scenarioKey, handleNodeClick]); // eslint-disable-line react-hooks/exhaustive-deps  useEffect(() => { if (stateRef.current) stateRef.current.targetStep = stepIndex; }, [stepIndex]);
+  }, [threeLoaded, scenarioKey, handleNodeClick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { if (stateRef.current) stateRef.current.targetStep = stepIndex; }, [stepIndex]);
   useEffect(() => { if (stateRef.current) stateRef.current.autoPlay = playing; }, [playing]);
   useEffect(() => { if (stateRef.current) stateRef.current.invertY = invertY; }, [invertY]);
   // Reset camera to default position + clear pan
@@ -1184,14 +1183,6 @@ export default function PacketUniverse({ scenarioKey = 'pablo', stepIndex = -1, 
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', cursor: 'grab' }} />
-      {popup && (
-        <NodePopup
-          nodeId={popup.nodeId}
-          screenPos={popup.screenPos}
-          containerRef={containerRef}
-          onClose={() => setPopup(null)}
-        />
-      )}
     </div>
   );
 }
